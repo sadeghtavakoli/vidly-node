@@ -1,18 +1,12 @@
 const express = require("express");
-const Joi = require("joi");
 const mongoose = require("mongoose");
+const { Genre, validate } = require("../models/genre");
 const debug = require("debug")("app:genres");
 
 const route = express.Router();
 
 // Genres list
 // Create Genre schema and model
-const Genre = mongoose.model(
-  "Genre",
-  mongoose.Schema({
-    name: { type: String, required: true, minLength: 3, maxlength: 50 },
-  })
-);
 
 loadGenreIndex();
 async function loadGenreIndex() {
@@ -51,7 +45,7 @@ route.get("/", async (req, res) => {
 });
 
 route.post("/", async (req, res) => {
-  const error = validateGenre(req.body);
+  const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
   const genre = new Genre({ name: req.body.name });
@@ -77,7 +71,7 @@ route.get("/:id", async (req, res) => {
 
 route.put("/:id", async (req, res) => {
   // Check if given genre is in right format
-  const error = validateGenre(req.body);
+  const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
   const id = req.params.id;
@@ -106,16 +100,5 @@ route.delete("/:id", async (req, res) => {
 
   return res.send(deletedGenre);
 });
-
-// Validate genre
-function validateGenre(genre) {
-  const scheme = Joi.object({
-    name: Joi.string().min(3).required(),
-  });
-
-  const { error } = scheme.validate(genre);
-
-  return error;
-}
 
 module.exports = route;
