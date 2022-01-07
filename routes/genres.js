@@ -1,72 +1,110 @@
 const express = require("express");
 const Joi = require("joi");
+const mongoose = require("mongoose");
+const debug = require("debug")("app:genres");
+
 const route = express.Router();
 
 // Genres list
-const genres = [
-  {
-    id: 0,
-    name: "Action",
-  },
-  {
-    id: 1,
-    name: "Comedy",
-  },
-  {
-    id: 2,
-    name: "Drama",
-  },
-  {
-    id: 3,
-    name: "FanFictoin",
-  },
-];
+// Create Genre schema and model
+const Genre = mongoose.model(
+  "Genre",
+  mongoose.Schema({
+    name: { type: String, required: true, minLength: 3, maxlength: 50 },
+  })
+);
 
-const debug = require("debug")("app:genres");
+loadGenreIndex();
+async function loadGenreIndex() {
+  try {
+    // populate db with inital Data
+    const currentGenres = await Genre.find();
+    if (currentGenres.length !== 0) return;
 
-route.get("/", (req, res) => {
-  res.json(genres);
+    const initialGenres = [
+      {
+        name: "Action",
+      },
+      {
+        name: "Comedy",
+      },
+      {
+        name: "Drama",
+      },
+      {
+        id: 3,
+        name: "FanFictoin",
+      },
+    ];
+    for (let g of initialGenres) {
+      const genre = new Genre({ ...g });
+      await genre.save();
+    }
+  } catch (err) {
+    debug("error in connectiong to db: ", err);
+  }
+}
+
+route.get("/", async (req, res) => {
+  const genres = await Genre.find().select("name");
+  res.send(genres);
 });
 
-route.post("/", (req, res) => {
+route.post("/", async (req, res) => {
   const error = validateGenre(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
-  const genre = {
-    id: genres[genres.length - 1].id + 1,
-    name: req.body.name,
-  };
-  genres.push(genre);
+  const genre = new Genre({ name: req.body.name });
+  const savedGenre = await genre.save();
+
+  return res.send(savedGenre);
+});
+
+route.get("/:id", async (req, res) => {
+  const id = req.params.id;
+  // Check if  given id is a valid ObjectId
+  const isIdValid = mongoose.Types.ObjectId.isValid(id);
+  if (!isIdValid) return res.status(400).send("Invalid Id");
+
+  // Check if genre with given id exists
+  const isGenreExist = await Genre.exists({ _id: req.params.id });
+  if (!isGenreExist) return res.status(404).send("Genre not found.");
+
+  // return genre
+  const genre = await Genre.findById(req.params.id);
   return res.send(genre);
 });
 
-route.get("/:id", (req, res) => {
-  const genre = genres.find((g) => g.id === +req.params.id);
+route.put("/:id", async (req, res) => {
+  // Check if given genre is in right format
+  const error = validateGenre(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
 
+  const id = req.params.id;
+  // Check if  given id is a valid ObjectId
+  const isIdValid = mongoose.Types.ObjectId.isValid(id);
+  if (!isIdValid) return res.status(400).send("Invalid Id");
+
+  const genre = await Genre.findByIdAndUpdate(
+    id,
+    { name: req.body.name },
+    { new: true }
+  );
   if (!genre) return res.status(404).send("Genre not found.");
 
   return res.send(genre);
 });
 
-route.put("/:id", (req, res) => {
-  const genre = genres.find((g) => g.id === +req.params.id);
+route.delete("/:id", async (req, res) => {
+  const id = req.params.id;
+  // Check if  given id is a valid ObjectId
+  const isIdValid = mongoose.Types.ObjectId.isValid(id);
+  if (!isIdValid) return res.status(400).send("Invalid Id");
 
-  if (!genre) return res.status(404).send("Genre not found.");
+  const deletedGenre = await Genre.findByIdAndDelete(req.params.id);
+  if (!deletedGenre) return res.status(404).send("Genre not found.");
 
-  const error = validateGenre(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
-
-  genre.name = req.body.name;
-  return res.send(genre);
-});
-
-route.delete("/:id", (req, res) => {
-  const index = genres.findIndex((g) => g.id === +req.params.id);
-
-  if (index === -1) return res.status(404).send("Genre not found.");
-
-  const genre = genres.splice(index, 1);
-  return res.send(genre);
+  return res.send(deletedGenre);
 });
 
 // Validate genre
