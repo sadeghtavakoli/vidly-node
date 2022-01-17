@@ -41,7 +41,7 @@ route.post("/", async (req, res) => {
     },
   });
 
-  //   saving rental and updating movie's numberInStcok using mongodb transaction
+  //saving rental and updating movie's numberInStcok
 
   await rental.save();
 
