@@ -5,11 +5,8 @@ const debug = require("debug")("app:genres");
 
 const route = express.Router();
 
-// Genres list
-// Create Genre schema and model
-
-loadGenreIndex();
-async function loadGenreIndex() {
+// populate index with default genres if its empty
+(async () => {
   try {
     // populate db with inital Data
     const currentGenres = await Genre.find();
@@ -37,7 +34,7 @@ async function loadGenreIndex() {
   } catch (err) {
     debug("error in connectiong to db: ", err);
   }
-}
+})();
 
 route.get("/", async (req, res) => {
   const genres = await Genre.find().select("name");
