@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const { Genre, validate } = require("../models/genre");
 const debug = require("debug")("app:genres");
-
+const auth = require("../middleware/auth");
 const route = express.Router();
 
 // populate index with default genres if its empty
@@ -41,7 +41,7 @@ route.get("/", async (req, res) => {
   res.send(genres);
 });
 
-route.post("/", async (req, res) => {
+route.post("/", auth, async (req, res) => {
   const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -66,7 +66,7 @@ route.get("/:id", async (req, res) => {
   return res.send(genre);
 });
 
-route.put("/:id", async (req, res) => {
+route.put("/:id", auth, async (req, res) => {
   // Check if given genre is in right format
   const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
@@ -86,7 +86,7 @@ route.put("/:id", async (req, res) => {
   return res.send(genre);
 });
 
-route.delete("/:id", async (req, res) => {
+route.delete("/:id", auth, async (req, res) => {
   const id = req.params.id;
   // Check if  given id is a valid ObjectId
   const isIdValid = mongoose.Types.ObjectId.isValid(id);
