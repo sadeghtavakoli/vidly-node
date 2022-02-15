@@ -1,5 +1,6 @@
 const express = require("express");
 const connection = require("../index");
+const auth = require("../middleware/auth");
 const { Customer } = require("../models/customer.js");
 const { Movie } = require("../models/movie.js");
 const { validate, Rental } = require("../models/rental.js");
@@ -11,7 +12,7 @@ route.get("/", async (req, res) => {
   res.send(rentals);
 });
 
-route.post("/", async (req, res) => {
+route.post("/", auth, async (req, res) => {
   // validate sent movie
   const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);

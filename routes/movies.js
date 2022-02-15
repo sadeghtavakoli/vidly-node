@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const auth = require("../middleware/auth");
 const { Genre } = require("../models/genre");
 const { Movie, validate } = require("../models/movie");
 const debug = require("debug")("app:genres");
@@ -10,7 +11,7 @@ route.get("/", async (req, res) => {
   res.send(movies);
 });
 
-route.post("/", async (req, res) => {
+route.post("/", auth, async (req, res) => {
   const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -43,7 +44,7 @@ route.get("/:id", async (req, res) => {
   return res.send(movie);
 });
 
-route.put("/:id", async (req, res) => {
+route.put("/:id", auth, async (req, res) => {
   // Check if given movie is in right format
   const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
@@ -71,7 +72,7 @@ route.put("/:id", async (req, res) => {
   return res.send(movie);
 });
 
-route.delete("/:id", async (req, res) => {
+route.delete("/:id", auth, async (req, res) => {
   const id = req.params.id;
   // Check if  given id is a valid ObjectId
   const isIdValid = mongoose.Types.ObjectId.isValid(id);

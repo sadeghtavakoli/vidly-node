@@ -2,8 +2,22 @@ const express = require("express");
 const _ = require("lodash");
 const bcrypt = require("bcrypt");
 const { User, validate } = require("../models/user");
+const auth = require("../middleware/auth");
 
-const route = express();
+const route = express.Router();
+
+route.get("/", async (req, res) => {
+  const users = await User.find();
+  res.send(users);
+});
+
+route.get("/me", auth, async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password");
+
+  if (!user) return res.status(400).send("User not found!");
+
+  res.send(user);
+});
 
 route.post("/", async (req, res) => {
   // validating user format
@@ -17,6 +31,7 @@ route.post("/", async (req, res) => {
   //creating user and saving it to database
   user = new User(_.pick(req.body, ["name", "password", "email"]));
 
+  // hash password
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(req.body.password, salt);
   user.password = hash;

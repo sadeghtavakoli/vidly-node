@@ -1,6 +1,7 @@
 const express = require("express");
 const { Customer, validate } = require("../models/customer");
 const mongoose = require("mongoose");
+const auth = require("../middleware/auth");
 
 const route = express.Router();
 
@@ -9,7 +10,7 @@ route.get("/", async (req, res) => {
   res.send(customers);
 });
 
-route.post("/", async (req, res) => {
+route.post("/", auth, async (req, res) => {
   const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -35,7 +36,7 @@ route.get("/:id", async (req, res) => {
   return res.send(customer);
 });
 
-route.put("/:id", async (req, res) => {
+route.put("/:id", auth, async (req, res) => {
   //Check if sent customer is valid
   const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
@@ -61,7 +62,7 @@ route.put("/:id", async (req, res) => {
   return res.send(customer);
 });
 
-route.delete("/:id", async (req, res) => {
+route.delete("/:id", auth, async (req, res) => {
   // Check if id is valid ObjectId
   const isIdValid = mongoose.Types.ObjectId.isValid(req.params.id);
   if (!isIdValid) return res.status(400).send("Invalid Id");

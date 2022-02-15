@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const { Genre, validate } = require("../models/genre");
 const debug = require("debug")("app:genres");
 const auth = require("../middleware/auth");
+const admin = require("../middleware/admin");
 const route = express.Router();
 
 // populate index with default genres if its empty
@@ -86,7 +87,7 @@ route.put("/:id", auth, async (req, res) => {
   return res.send(genre);
 });
 
-route.delete("/:id", auth, async (req, res) => {
+route.delete("/:id", [auth, admin], async (req, res) => {
   const id = req.params.id;
   // Check if  given id is a valid ObjectId
   const isIdValid = mongoose.Types.ObjectId.isValid(id);
