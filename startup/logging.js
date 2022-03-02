@@ -23,11 +23,12 @@ module.exports = function () {
     })
   );
   winston.add(new winston.transports.Console());
-  winston.ExceptionHandler
+  winston.ExceptionHandler;
   winston.add(
     new winston.transports.MongoDB({
       db: "mongodb://localhost/vidly-node",
       level: "info",
+      options: { useUnifiedTopology: true },
     })
   );
 };
