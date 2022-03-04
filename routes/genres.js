@@ -4,6 +4,8 @@ const { Genre, validate } = require("../models/genre");
 const debug = require("debug")("app:genres");
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
+const validateObjectId = require("../middleware/validateObjectId");
+
 const route = express.Router();
 
 // populate index with default genres if its empty
@@ -52,12 +54,7 @@ route.post("/", auth, async (req, res) => {
   return res.send(savedGenre);
 });
 
-route.get("/:id", async (req, res) => {
-  const id = req.params.id;
-  // Check if  given id is a valid ObjectId
-  const isIdValid = mongoose.Types.ObjectId.isValid(id);
-  if (!isIdValid) return res.status(400).send("Invalid Id");
-
+route.get("/:id", validateObjectId, async (req, res) => {
   // Check if genre with given id exists
   const isGenreExist = await Genre.exists({ _id: req.params.id });
   if (!isGenreExist) return res.status(404).send("Genre not found.");
@@ -67,15 +64,10 @@ route.get("/:id", async (req, res) => {
   return res.send(genre);
 });
 
-route.put("/:id", auth, async (req, res) => {
+route.put("/:id", [validateObjectId, auth], async (req, res) => {
   // Check if given genre is in right format
   const error = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
-
-  const id = req.params.id;
-  // Check if  given id is a valid ObjectId
-  const isIdValid = mongoose.Types.ObjectId.isValid(id);
-  if (!isIdValid) return res.status(400).send("Invalid Id");
 
   const genre = await Genre.findByIdAndUpdate(
     id,
@@ -87,12 +79,7 @@ route.put("/:id", auth, async (req, res) => {
   return res.send(genre);
 });
 
-route.delete("/:id", [auth, admin], async (req, res) => {
-  const id = req.params.id;
-  // Check if  given id is a valid ObjectId
-  const isIdValid = mongoose.Types.ObjectId.isValid(id);
-  if (!isIdValid) return res.status(400).send("Invalid Id");
-
+route.delete("/:id", [validateObjectId, auth, admin], async (req, res) => {
   const deletedGenre = await Genre.findByIdAndDelete(req.params.id);
   if (!deletedGenre) return res.status(404).send("Genre not found.");
 
